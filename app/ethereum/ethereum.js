@@ -15,7 +15,7 @@ class Ethereum {
         this._web3 = new Web3();
 
         // 初始ETH配置
-        const Tokens = require('../config/tokens');
+        const Tokens = require('../../config/tokens');
         this._eth = Tokens['eth'];
         this._web3.setProvider(new Web3.providers.HttpProvider(this._eth.web3url));
         [this._eth.private_key, this._eth.address] = this._readPrivateKey(this._eth.keystore, this._eth.unlockpassword);
@@ -42,6 +42,11 @@ class Ethereum {
         this._decoder = new InputDataDecoder(require('./abi'));
     }
 
+    // 添加账户
+    addAccount(addr) {
+        this._acounts.add(addr);
+    }
+
     // 开始轮询
     async startPoll() {
         if (!this._started) {
@@ -50,19 +55,6 @@ class Ethereum {
                 await this._poll();
             }
         }
-    }
-
-    // 生成地址
-    async generateAddress() {
-        let error, address;
-        let web3 = this._web3;
-        [error, address] = await future(web3.eth.personal.newAccount(''));
-        if (error != null) {
-            logger.info('Failed generate new eth addres, %s', error.message);
-            throw error;
-        }
-        this._acounts.add(address);
-        return address;
     }
     
     // 发送代币
@@ -160,6 +152,7 @@ class Ethereum {
         if (this._lastBlockNumber == 0) {
             this._lastBlockNumber = blockNumber;
         }
+        logger.debug('Current reading block number: %d', this._lastBlockNumber);
 
         // 获取区块信息
         [error, block] = await future(web3.eth.getBlock(this._lastBlockNumber));
@@ -186,6 +179,7 @@ class Ethereum {
                 notify.symbol = 'ETH';
                 notify.to = transaction.to;
                 notify.amount = web3.utils.fromWei(transaction.value);
+                logger.info(notify);
                 notify.post(this._eth.walletnotify);
             } else {
                 // 合约转账

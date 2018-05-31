@@ -1,8 +1,8 @@
 Server = {
-    rpc_host: '0.0.0.0',
-    rpc_port: 5080,
-    rpc_user: 'test',
-    rpc_password: '123456'
+    rpc_bind: '0.0.0.0', 
+    rpc_port: 18545,
+    rpc_user: 'username',
+    rpc_password: 'password'
 }
 
 module.exports = Server;
