@@ -43,4 +43,4 @@ node index.js
 ```
 
 ## 3. 替换geth
-etherd 启动时会加载 `geth` 服务器上的账户列表(`personal_listAccounts`)缓存到本地。如果以太坊网络中发生了向这些账户转账的事件，就会主动请求 `config/tokens.js` 配置文件中设定的 **收款通知地址**，将转账事件告知其它服务。前提时本地缓存的账户列表必须与 `geth` 服务器上的账户列表一致。一个解决方案就是停止使用 `geth` 创建账户，通过 etherd 来创建新账户。etherd 提供了web3 rpc请求的转发功能。
+etherd 启动时会加载 `geth` 服务器上的账户列表(`personal_listAccounts`)缓存到本地。如果以太坊网络中发生了向这些账户转账的事件，就会主动请求 `config/tokens.js` 配置文件中设定的 **收款通知地址**，将转账事件告知其它服务。前提时本地缓存的账户列表必须与 `geth` 服务器上的账户列表一致。一个解决方案就是停止使用 `geth` 创建账户，通过 etherd 来创建新账户。etherd 提供了web3 rpc请求的转发功能，web3 客户端程序可以直接连接使用。
