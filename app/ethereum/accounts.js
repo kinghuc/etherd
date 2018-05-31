@@ -22,6 +22,14 @@ class Accounts {
         this._accounts.add(address.toLowerCase());
     }
 
+    // 获取账户列表
+    getAccounts() {
+        if (this._accounts == null) {
+            this._accounts = new Set(accounts);
+        }
+        return this._accounts
+    }
+
     // 加载账户列表
     loadAccounts() {
         let self = this;

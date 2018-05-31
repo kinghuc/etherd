@@ -42,11 +42,6 @@ class Ethereum {
         this._decoder = new InputDataDecoder(require('./abi'));
     }
 
-    // 添加账户
-    addAccount(addr) {
-        this._acounts.add(addr);
-    }
-
     // 开始轮询
     async startPoll() {
         if (!this._started) {
@@ -55,6 +50,16 @@ class Ethereum {
                 await this._poll();
             }
         }
+    }
+
+    // 添加账户
+    addAccount(addr) {
+        this._acounts.add(addr);
+    }
+
+    // 获取账户列表
+    getAssounts() {
+        return this._acounts.getAccounts();
     }
     
     // 发送代币
@@ -71,14 +76,7 @@ class Ethereum {
     // 发送ERC20代币
     async sendERC20Token(symbol, to, amount) {
         // 查找代币信息
-        let token = null;
-        for (let idx in this._erc20_tokens) {
-            if (symbol == this._erc20_tokens[idx].symbol &&
-                this._erc20_tokens[idx].family == 'ETH') {
-                token = this._erc20_tokens[idx];
-                break;
-            }
-        }  
+        let token = this._findTokenConfig(symbol);
         if (token == null) {
             throw new Error('Unknown token symbol.');
         }
@@ -91,6 +89,45 @@ class Ethereum {
             throw error;
         }
         return hash;
+    }
+
+    // 获取账户余额
+    async getBalance(address, symbol) {
+        let error, balance;
+        let web3 = this._web3;
+        if (symbol == 'ETH') {
+            [error, balance] = await future(web3.eth.getBalance(address, 'latest'));
+            if (error != null) {
+                throw error;
+            }
+            return balance;
+        }
+
+        let token = this._findTokenConfig(symbol);
+        if (token == null) {
+            throw new Error('Unknown token symbol.');
+        }
+
+        const abi = require('./abi');
+        let contract = new web3.eth.Contract(abi, token.contractaddress);
+        [error, balance] = await future(contract.methods.balanceOf(address).call());
+        if (error != null) {
+            throw error;
+        }
+        return balance;
+    }
+
+    // 查找代币配置
+    _findTokenConfig(symbol) {
+        // 查找代币信息
+        let token = null;
+        for (let idx in this._erc20_tokens) {
+            if (symbol == this._erc20_tokens[idx].symbol &&
+                this._erc20_tokens[idx].family == 'ETH') {
+                return this._erc20_tokens[idx];
+            }
+        }
+        return token;
     }
 
     // 读取私钥

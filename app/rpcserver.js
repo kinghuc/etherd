@@ -23,7 +23,7 @@ class RPCServer {
         });
     }
 
-    // 开始服务
+    // 启动服务
     start() {
         this._server.start(function (error) {
             if (error) {
@@ -43,6 +43,7 @@ class RPCServer {
         this._addWeb3Methods(new Personal());
         
         // 添加etherd扩展接口
+        let self = this;
         this._server.addMethod('etherd_sendToken', function(request, callback) {
             self._sendToken(request, callback);
         });
@@ -104,7 +105,7 @@ class RPCServer {
     // 发送ETH代币
     async _sendToken(request, callback) {
         // 校验参数
-        data = request.params
+        let data = request.params;
         if (data.length < 2) {
             let error = {code: -32602, message: 'Invalid params' };
             callback(error, undefined);
@@ -135,7 +136,7 @@ class RPCServer {
     // 发送ERC20代币
     async _sendErc20Token(request, callback) {
         // 校验参数
-        data = request.params
+        let data = request.params;
         if (data.length < 3) {
             let error = {code: -32602, message: 'Invalid params' };
             callback(error, undefined);
