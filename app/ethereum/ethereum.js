@@ -15,7 +15,7 @@ class Ethereum {
         this._web3 = new Web3();
 
         // 初始ETH配置
-        const Tokens = require('../config/tokens');
+        const Tokens = require('../../config/tokens');
         this._eth = Tokens['eth'];
         this._web3.setProvider(new Web3.providers.HttpProvider(this._eth.web3url));
         [this._eth.private_key, this._eth.address] = this._readPrivateKey(this._eth.keystore, this._eth.unlockpassword);
@@ -52,17 +52,14 @@ class Ethereum {
         }
     }
 
-    // 生成地址
-    async generateAddress() {
-        let error, address;
-        let web3 = this._web3;
-        [error, address] = await future(web3.eth.personal.newAccount(''));
-        if (error != null) {
-            logger.info('Failed generate new eth addres, %s', error.message);
-            throw error;
-        }
-        this._acounts.add(address);
-        return address;
+    // 添加账户
+    addAccount(addr) {
+        this._acounts.add(addr);
+    }
+
+    // 获取账户列表
+    getAssounts() {
+        return this._acounts.getAccounts();
     }
     
     // 发送代币
@@ -79,14 +76,7 @@ class Ethereum {
     // 发送ERC20代币
     async sendERC20Token(symbol, to, amount) {
         // 查找代币信息
-        let token = null;
-        for (let idx in this._erc20_tokens) {
-            if (symbol == this._erc20_tokens[idx].symbol &&
-                this._erc20_tokens[idx].family == 'ETH') {
-                token = this._erc20_tokens[idx];
-                break;
-            }
-        }  
+        let token = this._findTokenConfig(symbol);
         if (token == null) {
             throw new Error('Unknown token symbol.');
         }
@@ -99,6 +89,45 @@ class Ethereum {
             throw error;
         }
         return hash;
+    }
+
+    // 获取账户余额
+    async getBalance(address, symbol) {
+        let error, balance;
+        let web3 = this._web3;
+        if (symbol == 'ETH') {
+            [error, balance] = await future(web3.eth.getBalance(address, 'latest'));
+            if (error != null) {
+                throw error;
+            }
+            return balance;
+        }
+
+        let token = this._findTokenConfig(symbol);
+        if (token == null) {
+            throw new Error('Unknown token symbol.');
+        }
+
+        const abi = require('./abi');
+        let contract = new web3.eth.Contract(abi, token.contractaddress);
+        [error, balance] = await future(contract.methods.balanceOf(address).call());
+        if (error != null) {
+            throw error;
+        }
+        return balance;
+    }
+
+    // 查找代币配置
+    _findTokenConfig(symbol) {
+        // 查找代币信息
+        let token = null;
+        for (let idx in this._erc20_tokens) {
+            if (symbol == this._erc20_tokens[idx].symbol &&
+                this._erc20_tokens[idx].family == 'ETH') {
+                return this._erc20_tokens[idx];
+            }
+        }
+        return token;
     }
 
     // 读取私钥
@@ -160,6 +189,7 @@ class Ethereum {
         if (this._lastBlockNumber == 0) {
             this._lastBlockNumber = blockNumber;
         }
+        logger.debug('Current reading block number: %d', this._lastBlockNumber);
 
         // 获取区块信息
         [error, block] = await future(web3.eth.getBlock(this._lastBlockNumber));
@@ -186,6 +216,7 @@ class Ethereum {
                 notify.symbol = 'ETH';
                 notify.to = transaction.to;
                 notify.amount = web3.utils.fromWei(transaction.value);
+                logger.info(notify);
                 notify.post(this._eth.walletnotify);
             } else {
                 // 合约转账

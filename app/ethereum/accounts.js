@@ -11,7 +11,7 @@ class Accounts {
         if (this._accounts == null) {
             return false;
         }
-        return this._accounts.has(address);
+        return this._accounts.has(address.toLowerCase());
     }
 
     // 添加账户
@@ -19,7 +19,15 @@ class Accounts {
         if (this._accounts == null) {
             this._accounts = new Set(accounts);
         }
-        this._accounts.add(address);
+        this._accounts.add(address.toLowerCase());
+    }
+
+    // 获取账户列表
+    getAccounts() {
+        if (this._accounts == null) {
+            this._accounts = new Set(accounts);
+        }
+        return this._accounts
     }
 
     // 加载账户列表
@@ -33,7 +41,11 @@ class Accounts {
             for (let i in accounts) {
                 accounts[i] = accounts[i].toLowerCase();
             }
-            self._accounts = new Set(accounts);
+
+            if (self._accounts == null) {
+                self._accounts = new Set(accounts);
+            }
+            self._accounts = new Set([...self._accounts, ...new Set(accounts)]);
         });
     }
 }
